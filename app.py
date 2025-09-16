@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestRegressor
 import gradio as gr
 
 # Configurações - troque pelo seu usuário e dataset repo
-HF_DATASET_REPO = "seu_usuario/wine-ml-dataset"
+HF_DATASET_REPO = "henriquebap/wine-ml-dataset"
 CSV_FILENAME = "WineQT.csv"
 
 model = None
@@ -13,6 +13,7 @@ feature_cols = [
     "fixed acidity","volatile acidity","citric acid","residual sugar","chlorides",
     "free sulfur dioxide","total sulfur dioxide","density","pH","sulphates","alcohol"
 ]
+
 
 def load_data():
     csv_path = hf_hub_download(repo_id=HF_DATASET_REPO, repo_type="dataset", filename=CSV_FILENAME)
