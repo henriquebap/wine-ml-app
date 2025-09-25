@@ -3,3 +3,8 @@ numpy
 scikit-learn
 gradio
 huggingface_hub
+matplotlib
+seaborn
+plotly
+jupyter
+scipy
