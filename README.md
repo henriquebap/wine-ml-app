@@ -69,9 +69,10 @@ Este projeto é desenvolvido em Python e Jupyter Notebooks que realiza uma anali
    
 ## Notebooks
 
-- 01 EDA: inspeção inicial, estatísticas, distribuições e correlações
-- 02 Estatística: normalidade, ANOVA, outliers
+- 01 EDA: inspeção inicial, estatísticas, distribuições e correlações (alvo numérico `quality` com classes auxiliares apenas para visualização)
+- 02 Estatística: testes não-paramétricos (Kruskal), correlação Spearman/Kendall
 - 03 Visualização: histogramas, boxplots, scatter, heatmap
+- 04-07 Modelagem: regressão em `quality` usando dados processados (`df_capped.csv`) e `selected_features` exportado de 01
 
 ## Dicionário das features do dataset
 
@@ -91,7 +92,36 @@ Este projeto é desenvolvido em Python e Jupyter Notebooks que realiza uma anali
 
 ## App Gradio
 
-O `app.py` treina um `RandomForestRegressor` usando o CSV do HF e permite inferência manual.
+O `app.py` tenta carregar o modelo final salvo em `data/models/wine_quality_regressor.joblib` (exportado no notebook 07). Se não existir, faz fallback para treinar rapidamente um `RandomForestRegressor` usando o CSV do Hugging Face e permite inferência manual.
+
+### Executar localmente
+
+1. Crie e ative o ambiente
+   ```bash
+   python -m venv .venv311
+   source .venv311/bin/activate
+   pip install -r requirements.txt
+   ```
+2. (Opcional) Defina variáveis de ambiente para Hugging Face
+   ```bash
+   export HF_TOKEN=seu_token
+   export HF_DATASET_REPO=henriquebap/wine-ml-dataset
+   export HF_DATASET_FILENAME=WineQT.csv
+   export HF_PROCESSED_REPO=henriquebap/wine-ml-processed
+   ```
+3. Execute os notebooks na ordem 01→07 para gerar `data/processed/df_capped.csv`, `reports/eda/selected_features.csv` e exportar o modelo em `data/models/`.
+4. Rode o app
+   ```bash
+   python app.py
+   ```
+
+### Checklist de consistência
+
+- [x] Objetivo alinhado: regressão sobre `quality` (classes apenas para visualização)
+- [x] Dados processados unificados: notebooks 02-07 usam `df_capped.csv` (Hub/local)
+- [x] Seleção de features: carrega `reports/eda/selected_features.csv` com fallback para numéricas
+- [x] Export de modelo final: `data/models/wine_quality_regressor.joblib`
+- [x] App conectado ao modelo final com fallback de treino
 
 ## Próximos passos
 

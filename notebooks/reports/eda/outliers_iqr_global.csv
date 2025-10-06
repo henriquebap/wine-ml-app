@@ -1,0 +1,12 @@
+feature,Alta (7-8),Baixa (3-4),Média (5-6)
+alcohol,0.015,0.0,0.005
+chlorides,0.044,0.128,0.071
+citric acid,0.0,0.026,0.0
+density,0.066,0.0,0.025
+fixed acidity,0.058,0.026,0.033
+free sulfur dioxide,0.015,0.0,0.017
+pH,0.036,0.077,0.019
+residual sugar,0.153,0.154,0.081
+sulphates,0.058,0.077,0.036
+total sulfur dioxide,0.015,0.0,0.037
+volatile acidity,0.0,0.077,0.008

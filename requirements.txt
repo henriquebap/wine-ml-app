@@ -8,3 +8,7 @@ seaborn
 plotly
 jupyter
 scipy
+dotenv
+joblib
+xgboost
+ipykernel
