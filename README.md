@@ -73,6 +73,22 @@ Este projeto é desenvolvido em Python e Jupyter Notebooks que realiza uma anali
 - 02 Estatística: normalidade, ANOVA, outliers
 - 03 Visualização: histogramas, boxplots, scatter, heatmap
 
+## Dicionário das features do dataset
+
+| Feature               | Significado (PT-BR)                                                                                                  |
+|-----------------------|----------------------------------------------------------------------------------------------------------------------|
+| fixed acidity         | Ácidos fixos (não voláteis) presentes no vinho; não evaporam facilmente e influenciam a acidez total e o sabor.     |
+| volatile acidity      | Quantidade de ácido acético; em níveis altos pode gerar aroma/sabor avinagrado desagradável.                        |
+| citric acid           | Ácido cítrico em pequenas quantidades; adiciona sensação de “frescor” e pode realçar o sabor do vinho.              |
+| residual sugar        | Açúcar remanescente após a fermentação; é raro < 1 g/L; > 45 g/L geralmente classifica o vinho como doce.           |
+| chlorides             | Teor de cloretos (sal) no vinho.                                                                                    |
+| free sulfur dioxide   | SO₂ livre em equilíbrio entre forma molecular (gás dissolvido) e bissulfito; inibe microrganismos e oxidação.       |
+| total sulfur dioxide  | SO₂ total (livre + combinado); em baixas concentrações é pouco perceptível; acima de ~50 ppm torna-se evidente.     |
+| density               | Densidade do vinho; costuma ser próxima à da água, variando conforme teor de álcool (↓ densidade) e açúcar (↑).     |
+| pH                    | Mede acidez/basicidade (0 = muito ácido, 14 = muito básico); vinhos geralmente ficam entre pH 3 e 4.                |
+| sulphates             | Sulfatos usados como aditivos; podem contribuir para os níveis de SO₂, atuando como antimicrobianos/antioxidantes.  |
+| alcohol               | Teor alcoólico (% de álcool em volume) do vinho.                                                                    |
+
 ## App Gradio
 
 O `app.py` treina um `RandomForestRegressor` usando o CSV do HF e permite inferência manual.
