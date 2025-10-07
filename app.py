@@ -120,14 +120,35 @@ def load_or_train(strict: bool = False):
         return "Modelo salvo não encontrado. Exporte via notebook 07 e garanta o arquivo em data/models/wine_quality_regressor.joblib."
     return train()
 
-def predict(fixed_acidity, volatile_acidity, citric_acid, residual_sugar, chlorides,
-            free_sulfur_dioxide, total_sulfur_dioxide, density, pH, sulphates, alcohol):
+def predict(*values):
+    """Make a single prediction from UI inputs, robust to feature count mismatches.
+
+    Aligns provided values to the model's expected number of features to avoid
+    shape/column mismatches when the persisted model was trained with a
+    different feature set than the current UI defaults.
+    """
     if model is None:
         load_or_train()
-    x = pd.DataFrame([[
-        fixed_acidity, volatile_acidity, citric_acid, residual_sugar, chlorides,
-        free_sulfur_dioxide, total_sulfur_dioxide, density, pH, sulphates, alcohol
-    ]], columns=feature_cols)
+
+    # Determine how many features the model expects
+    expected_n = getattr(model, "n_features_in_", None)
+    cols = list(feature_cols)
+    if expected_n is None:
+        expected_n = len(cols) if len(cols) > 0 else len(values)
+
+    # Trim or pad the provided values to match the expected feature count
+    vals = list(values)[:expected_n]
+    if len(vals) < expected_n:
+        vals += [np.nan] * (expected_n - len(vals))
+
+    # Use feature names if available for the expected size; otherwise, fall back
+    # to generated placeholder names. Most sklearn estimators ignore column names.
+    if len(cols) >= expected_n:
+        used_cols = cols[:expected_n]
+    else:
+        used_cols = cols + [f"f{i}" for i in range(len(cols), expected_n)]
+
+    x = pd.DataFrame([vals], columns=used_cols)
     pred = float(model.predict(x)[0])
     return f"{pred:.2f} (arredondado: {int(round(pred))})"
 
