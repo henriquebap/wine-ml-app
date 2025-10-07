@@ -91,3 +91,24 @@ htmlcov/
 .coverage
 .coverage.*
 coverage.xml
+# Bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual envs
+.venv/
+.venv311/
+
+# Local notebooks outputs
+notebooks/.ipynb_checkpoints/
+
+# Large local artifacts (keep notebooks/data/* only tracked if needed)
+notebooks/data/
+!notebooks/data/processed/
+
+# Local analysis docs (do not track)
+ANALISE_COMPLETA_DO_PROJETO.md
+PLANO_ACAO_IMEDIATO.md
+
+# OS files
+.DS_Store
