@@ -13,6 +13,11 @@ CSV_FILENAME = "WineQT.csv"
 MODEL_PATH = Path("data/models/wine_quality_regressor.joblib")
 STRICT_DEFAULT = (os.getenv("STRICT_SAVED_ONLY", "true").lower() in {"1","true","yes"})
 
+# Fallback para carregar modelo do Hub (configurável por variáveis de ambiente)
+HF_MODEL_REPO = os.getenv("HF_MODEL_REPO", "").strip() or None  # ex.: "henriquebap/wine-ml-model"
+HF_MODEL_FILENAME = os.getenv("HF_MODEL_FILENAME", "wine_quality_regressor.joblib")
+HF_MODEL_REPO_TYPE = os.getenv("HF_MODEL_REPO_TYPE", "model")  # "model" | "dataset" | "space"
+
 model = None
 feature_cols = [
     "fixed acidity","volatile acidity","citric acid","residual sugar","chlorides",
@@ -31,19 +36,66 @@ def load_data():
 
 def load_final_model():
     global model, feature_cols
+    # 1) Tenta carregar do disco
     if MODEL_PATH.exists():
         try:
             bundle = joblib.load(MODEL_PATH)
-            loaded_model = bundle.get("model", None)
-            meta = bundle.get("metadata", {})
-            feats = meta.get("features")
-            if isinstance(feats, list) and len(feats) > 0:
-                feature_cols = feats
-            if loaded_model is not None:
-                model = loaded_model
-                return "Modelo final carregado do disco."
+            if isinstance(bundle, dict):
+                loaded_model = bundle.get("model", None)
+                meta = bundle.get("metadata", {})
+                feats = meta.get("features")
+                if isinstance(feats, list) and len(feats) > 0:
+                    feature_cols = feats
+                if loaded_model is not None:
+                    model = loaded_model
+                    return "Modelo final carregado do disco."
+            else:
+                # Caso seja o estimador diretamente
+                model_candidate = bundle
+                if hasattr(model_candidate, "predict"):
+                    model = model_candidate
+                    return "Modelo final carregado do disco."
         except Exception as e:
             return f"Falha ao carregar modelo salvo: {e}"
+
+    # 2) Fallback: tentar baixar do Hub, se configurado
+    if HF_MODEL_REPO:
+        try:
+            token = os.getenv("HF_TOKEN", None)
+            remote_path = hf_hub_download(
+                repo_id=HF_MODEL_REPO,
+                filename=HF_MODEL_FILENAME,
+                repo_type=HF_MODEL_REPO_TYPE,
+                token=token,
+            )
+            bundle = joblib.load(remote_path)
+            loaded_model = None
+            meta = {}
+            if isinstance(bundle, dict):
+                loaded_model = bundle.get("model", None)
+                meta = bundle.get("metadata", {})
+            else:
+                loaded_model = bundle
+
+            # Atualiza features se disponível
+            feats = (meta or {}).get("features")
+            if isinstance(feats, list) and len(feats) > 0:
+                feature_cols = feats
+
+            if loaded_model is not None and hasattr(loaded_model, "predict"):
+                model = loaded_model
+                # Salva localmente para próximos boots
+                try:
+                    MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+                    joblib.dump({"model": model, "metadata": {"features": feature_cols}}, MODEL_PATH)
+                except Exception:
+                    # Não bloquear execução se falhar salvar localmente
+                    pass
+                return f"Modelo final baixado do Hub ({HF_MODEL_REPO_TYPE}:{HF_MODEL_REPO})."
+        except Exception as e:
+            # Não retornar erro aqui; load_or_train decide conforme strict
+            return f"Falha ao baixar modelo do Hub: {e}"
+
     return None
 
 def train():
@@ -138,7 +190,7 @@ with gr.Blocks(title="Wine Quality - MVP") as demo:
     gr.Markdown("## 🍷 Wine Quality - MVP (Modelo Final + Fallback de Treino)")
     status = gr.Textbox(label="Status", interactive=False)
     with gr.Row():
-        strict_only = gr.Checkbox(value=True, label="Usar somente modelo salvo (sem treinar fallback)")
+        strict_only = gr.Checkbox(value=STRICT_DEFAULT, label="Usar somente modelo salvo (sem treinar fallback)")
         btn_load = gr.Button("Carregar modelo final / Treinar")
         btn_info = gr.Button("Info do modelo")
     btn_load.click(fn=load_or_train, inputs=[strict_only], outputs=status)
@@ -185,8 +237,8 @@ with gr.Blocks(title="Wine Quality - MVP") as demo:
     info_out = gr.JSON(label="Detalhes do modelo")
     btn_info.click(model_info, outputs=info_out)
 
-    # Carrega ao iniciar (estrito por padrão)
-    status.value = load_or_train(strict=True)
+    # Carrega ao iniciar (controlado por STRICT_DEFAULT)
+    status.value = load_or_train(strict=STRICT_DEFAULT)
 
 if __name__ == "__main__":
     demo.launch()

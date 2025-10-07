@@ -94,6 +94,27 @@ Este projeto é desenvolvido em Python e Jupyter Notebooks que realiza uma anali
 
 O `app.py` tenta carregar o modelo final salvo em `data/models/wine_quality_regressor.joblib` (exportado no notebook 07). Se não existir, faz fallback para treinar rapidamente um `RandomForestRegressor` usando o CSV do Hugging Face e permite inferência manual.
 
+### Carregamento do modelo via Hugging Face Hub (fallback)
+
+Se o arquivo local não existir em Spaces, o app agora tenta baixar o bundle do Hugging Face Hub, usando variáveis de ambiente:
+
+```bash
+# obrigatórios para fallback
+export HF_MODEL_REPO=henriquebap/wine-ml-model   # repo que contém o .joblib
+export HF_MODEL_FILENAME=wine_quality_regressor.joblib
+# opcional: por padrão é "model"; mude para "dataset" se você versiona o .joblib em dataset
+export HF_MODEL_REPO_TYPE=model                  # model | dataset | space
+
+# se o repositório for privado
+export HF_TOKEN=seu_token
+```
+
+O bundle esperado pode ser:
+- Um dicionário Joblib com chaves `model` e `metadata` (com `metadata.features`), ou
+- O estimador diretamente (objeto do scikit-learn com `.predict`).
+
+Em caso de sucesso no download, o arquivo é salvo em `data/models/wine_quality_regressor.joblib` para boots futuros.
+
 ### Executar localmente
 
 1. Crie e ative o ambiente
