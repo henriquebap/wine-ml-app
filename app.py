@@ -56,7 +56,7 @@ def load_final_model():
                     model = model_candidate
                     return "Modelo final carregado do disco."
         except Exception as e:
-            return f"Falha ao carregar modelo salvo: {e}"
+            print(f"[warn] Falha ao carregar modelo salvo localmente: {e}")
 
     # 2) Fallback: tentar baixar do Hub, se configurado
     if HF_MODEL_REPO:
@@ -94,7 +94,7 @@ def load_final_model():
                 return f"Modelo final baixado do Hub ({HF_MODEL_REPO_TYPE}:{HF_MODEL_REPO})."
         except Exception as e:
             # Não retornar erro aqui; load_or_train decide conforme strict
-            return f"Falha ao baixar modelo do Hub: {e}"
+            print(f"[warn] Falha ao baixar modelo do Hub: {e}")
 
     return None
 
