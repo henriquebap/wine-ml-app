@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 from huggingface_hub import hf_hub_download
@@ -10,6 +11,7 @@ import joblib
 HF_DATASET_REPO = "henriquebap/wine-ml-dataset"
 CSV_FILENAME = "WineQT.csv"
 MODEL_PATH = Path("data/models/wine_quality_regressor.joblib")
+STRICT_DEFAULT = (os.getenv("STRICT_SAVED_ONLY", "true").lower() in {"1","true","yes"})
 
 model = None
 feature_cols = [
@@ -54,11 +56,16 @@ def train():
     return f"Modelo treinado com {len(df)} linhas."
 
 
-def load_or_train():
-    """Tenta carregar o modelo final salvo; se não existir, treina um baseline do CSV."""
+def load_or_train(strict: bool = False):
+    """Carrega o modelo salvo; se ausente e strict=False, treina um baseline.
+
+    strict=True: nunca treina; retorna mensagem de erro se o modelo salvo não existir.
+    """
     msg = load_final_model()
     if msg:
         return msg
+    if strict:
+        return "Modelo salvo não encontrado. Exporte via notebook 07 e garanta o arquivo em data/models/wine_quality_regressor.joblib."
     return train()
 
 def predict(fixed_acidity, volatile_acidity, citric_acid, residual_sugar, chlorides,
@@ -91,6 +98,26 @@ def predict_batch(file: gr.File | None):
     return f"OK - {len(out)} linhas processadas.", out
 
 
+def csv_template_file():
+    """Gera um CSV somente com cabeçalhos de features, para facilitar upload."""
+    path = Path("wine_features_template.csv")
+    pd.DataFrame(columns=feature_cols).to_csv(path, index=False)
+    return str(path)
+
+
+def sample_csv_file(n: int = 10):
+    """Gera um CSV de amostra com n linhas do dataset (sem a coluna quality)."""
+    try:
+        df = load_data()
+    except Exception as e:
+        return f"Falha ao carregar dataset para amostra: {e}", None
+    n = int(max(1, min(int(n or 10), len(df))))
+    sample = df.sample(n, random_state=42)[feature_cols]
+    path = Path("wine_sample.csv")
+    sample.to_csv(path, index=False)
+    return str(path), sample
+
+
 def model_info():
     if model is None:
         load_or_train()
@@ -111,9 +138,10 @@ with gr.Blocks(title="Wine Quality - MVP") as demo:
     gr.Markdown("## 🍷 Wine Quality - MVP (Modelo Final + Fallback de Treino)")
     status = gr.Textbox(label="Status", interactive=False)
     with gr.Row():
+        strict_only = gr.Checkbox(value=True, label="Usar somente modelo salvo (sem treinar fallback)")
         btn_load = gr.Button("Carregar modelo final / Treinar")
         btn_info = gr.Button("Info do modelo")
-    btn_load.click(fn=load_or_train, outputs=status)
+    btn_load.click(fn=load_or_train, inputs=[strict_only], outputs=status)
 
     gr.Markdown("### Fazer predição")
     with gr.Row():
@@ -144,11 +172,21 @@ with gr.Blocks(title="Wine Quality - MVP") as demo:
     btn_batch = gr.Button("Processar CSV")
     btn_batch.click(predict_batch, inputs=csv_in, outputs=[msg, df_out])
 
+    gr.Markdown("### Arquivos auxiliares")
+    with gr.Row():
+        n_rows = gr.Number(value=10, label="N amostras", precision=0)
+        btn_tpl = gr.Button("Baixar template CSV (cabeçalhos)")
+        btn_smpl = gr.Button("Gerar amostra CSV")
+    file_out = gr.File(label="Arquivo gerado")
+    df_preview = gr.Dataframe(label="Prévia da amostra")
+    btn_tpl.click(csv_template_file, outputs=file_out)
+    btn_smpl.click(sample_csv_file, inputs=n_rows, outputs=[file_out, df_preview])
+
     info_out = gr.JSON(label="Detalhes do modelo")
     btn_info.click(model_info, outputs=info_out)
 
-    # Carrega ao iniciar (ou treina se ausente)
-    status.value = load_or_train()
+    # Carrega ao iniciar (estrito por padrão)
+    status.value = load_or_train(strict=True)
 
 if __name__ == "__main__":
     demo.launch()
