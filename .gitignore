@@ -87,6 +87,9 @@ data/models/*
 models/
 !models/.gitkeep
 
+# Allow the saved production model to be tracked
+!data/models/wine_quality_regressor.joblib
+
 # Coverage reports
 htmlcov/
 .coverage
